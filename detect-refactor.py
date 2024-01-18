@@ -1,3 +1,5 @@
+import tempfile
+
 from numpy import random
 from pydantic import BaseModel
 
@@ -14,17 +16,9 @@ class Config(BaseModel):
     conf_thres: float = 0.25
     iou_thres: float = 0.45
     device: str = 'cpu'
-    view_img: bool = False
-    save_txt:bool = False
-    save_conf: bool = False
-    nosave: bool = False
     classes: int = None
     agnostic_nms: bool = False
     augment: bool = False
-    update: bool = False
-    project: str = 'runs/detect'
-    name: str = "exp"
-    exist_ok: bool = False
     no_trace: bool = False
 class LogoDetector():
     def init_model(self):
@@ -90,9 +84,9 @@ class LogoDetector():
                 for *xyxy, conf, cls in reversed(det):
                     label = f'{names[int(cls)]} {conf:.2f}'
                     plot_one_box(xyxy, img0, label=label, color=colors[int(cls)], line_thickness=1)
-
-            cv2.imwrite("/tmp/a.jpg", img0)
-
+            file_path = os.path.join(tempfile.mkdtemp(), 'tagged_img.jpg')
+            cv2.imwrite(file_path, img0)
+            return file_path
 
     def __init__(self):
         self.opt = Config()
@@ -101,4 +95,23 @@ class LogoDetector():
 
 if __name__ == '__main__':
     detector = LogoDetector().init_model()
-    detector.detect("cocacola.jpg")
+
+    from flask import Flask, send_file
+    from flask import request
+
+    app = Flask(__name__)
+
+    @app.route('/flickr27', methods=['POST'])
+    def login():
+        print(request.content_type)
+        import io
+        import PIL.Image as Image
+
+        data = request.get_data()
+        image = Image.open(io.BytesIO(data))
+        file_path = os.path.join(tempfile.mkdtemp(), 'image.jpg')
+        image.save(file_path)
+        tagged_img = detector.detect(file_path)
+        return send_file(tagged_img, mimetype=request.content_type)
+
+    app.run(host='0.0.0.0', port=9999)
