@@ -1,15 +1,15 @@
 from numpy import random
 from pydantic import BaseModel
 
-from yolov7.models.experimental import attempt_load
-from yolov7.utils.datasets import letterbox
-from yolov7.utils.general import *
-from yolov7.utils.plots import plot_one_box
-from yolov7.utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
+from models.experimental import attempt_load
+from utils.datasets import letterbox
+from utils.general import *
+from utils.plots import plot_one_box
+from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 
 
 class Config(BaseModel):
-    weights: str = "../../runs/train/yolo_logo_det/weights/best.pt"
+    weights: str = "best.pt"
     img_size: int = 640
     conf_thres: float = 0.25
     iou_thres: float = 0.45
@@ -101,4 +101,4 @@ class LogoDetector():
 
 if __name__ == '__main__':
     detector = LogoDetector().init_model()
-    detector.detect("../../data/Sample/test/cocacola.jpg")
+    detector.detect("cocacola.jpg")
